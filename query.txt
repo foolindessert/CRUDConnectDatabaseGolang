@@ -1,0 +1,17 @@
+create table users(
+	Id serial primary key,
+	Username varchar(50) not null,
+	Email text unique not null,
+	Password text unique not null,
+	Age int not null,
+	CreatedAt DATE,
+	UpdatedAt DATE
+	
+)
+
+select * from users
+
+insert into users
+(username,email,password,age,createdat,updatedat)
+values
+('usamah08','usamah@gmail.com','pasword1',23,'19-06-2022','19-06-2022')
