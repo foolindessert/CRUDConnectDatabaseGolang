@@ -4,19 +4,20 @@ import (
 	"database/sql"
 	_ "encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
-	"log"
+
+	handler "DATABASECRUD/Handler"
 
 	"github.com/gorilla/mux"
-	handler "DATABASECRUD/Handler"
 	_ "github.com/lib/pq"
 )
 
 const (
 	host     = "localhost"
 	port     = 5432
-	user     = "postgres" 
+	user     = "postgres"
 	password = "Abcdzfgh123" //ganti sesuai nama password postgres
 	dbname   = "db-go-sql"
 )
@@ -45,7 +46,9 @@ func main() {
 	// handler crud
 	r := mux.NewRouter()
 	userHandler := handler.NewUserHandler(db)
+	registerHandler := handler.UserRegisterHandler(db)
 	r.HandleFunc("/users", userHandler.UsersHandler)
+	r.HandleFunc("/users/register", registerHandler.RegisterUser)
 	r.HandleFunc("/users/{id}", userHandler.UsersHandler)
 
 	fmt.Println("Now listening on port 0.0.0.0" + PORT)

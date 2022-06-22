@@ -12,13 +12,22 @@ import (
 
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserHandlerInterface interface {
 	UsersHandler(w http.ResponseWriter, r *http.Request)
 }
 
+type RegisterHandlerInterface interface {
+	RegisterUser(w http.ResponseWriter, r *http.Request)
+}
+
 type UserHandler struct {
+	db *sql.DB
+}
+
+type RegisterHandler struct {
 	db *sql.DB
 }
 
@@ -26,11 +35,50 @@ func NewUserHandler(db *sql.DB) UserHandlerInterface {
 	return &UserHandler{db: db}
 }
 
+func UserRegisterHandler(db *sql.DB) RegisterHandlerInterface {
+	return &RegisterHandler{db: db}
+}
+
 var (
 	db *sql.DB
 
 	err error
 )
+
+// RegisterUser implements RegisterHandlerInterface
+func (h *RegisterHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
+
+	var newUser entity.User
+	json.NewDecoder(r.Body).Decode(&newUser)
+	newPassword := []byte(newUser.Password)
+	hashedPassword, err := bcrypt.GenerateFromPassword(newPassword, bcrypt.DefaultCost)
+	if err != nil {
+		panic(err)
+	}
+	newUser.Password = string(hashedPassword)
+	// newUser.Password = string(newPassword)
+	// fmt.Println(newUser.Password)
+	sqlStatment := `insert into users
+	(username,email,password,age,createdat,updatedat)
+	values ($1,$2,$3,$4,$5,$5) Returning id` //sesuai dengan nama table
+	err = h.db.QueryRow(sqlStatment,
+		newUser.Username,
+		newUser.Email,
+		newUser.Password,
+		newUser.Age,
+		time.Now(),
+	).Scan(&newUser.Id)
+
+	response_Register := entity.ResponseRegister{
+		Age:      newUser.Age,
+		Email:    newUser.Email,
+		Id:       newUser.Id,
+		Username: newUser.Username,
+	}
+	jsonData, _ := json.Marshal(&response_Register	)
+	w.Header().Add("Content-Type", "application/json")
+	w.Write(jsonData)
+}
 
 func (h *UserHandler) UsersHandler(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
@@ -99,34 +147,29 @@ func (h *UserHandler) getUsersByIDHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (h *UserHandler) createUsersHandler(w http.ResponseWriter, r *http.Request) {
+
 	var newUser entity.User
-	users := entity.User{}
 	json.NewDecoder(r.Body).Decode(&newUser)
-	newUser.CreatedAt = time.Now()
-	newUser.UpdatedAt = time.Now()
 	sqlStatment := `insert into users
-	(username,email,password,age,createdat,updatedat) 
-	values ($1,$2,$3,$4,$5,$6)
-	returning * ` //sesuai dengan nama table
-	err := h.db.QueryRow(sqlStatment,
+	(username,email,password,age,createdat,updatedat)
+	values ($1,$2,$3,$4,$5,$5)` //sesuai dengan nama table
+	res, err := h.db.Exec(sqlStatment,
 		newUser.Username,
 		newUser.Email,
 		newUser.Password,
 		newUser.Age,
-		newUser.CreatedAt,
-		newUser.UpdatedAt,
-	).Scan(
-		&users.Username,
-		&users.Email,
-		&users.Password,
-		&users.Age,
-		&users.CreatedAt,
-		&users.UpdatedAt)
+		time.Now(),
+	)
 
 	if err != nil {
 		panic(err)
 	}
-	w.Write([]byte(fmt.Sprint("User  created")))
+	count, err := res.RowsAffected()
+	if err != nil {
+		panic(err)
+	}
+
+	w.Write([]byte(fmt.Sprint("User  update ", count)))
 	return
 }
 
