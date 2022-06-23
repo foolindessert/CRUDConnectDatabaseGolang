@@ -7,11 +7,12 @@ import (
 
 	"github.com/golang-jwt/jwt/v4"
 	_ "github.com/golang-jwt/jwt/v4"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserIface interface {
 	Register(user *entity.User) (*entity.User, error)
-	Login(user *entity.User) (*entity.User, error)
+	Login(user *entity.User, tempPassword string) (*entity.User, error)
 	GetToken(id uint, email string, password string) string
 }
 
@@ -47,12 +48,14 @@ func (u *UserSvc) Register(user *entity.User) (*entity.User, error) {
 	return user, nil
 }
 
-func (u *UserSvc) Login(user *entity.User) (*entity.User, error) {
+func (u *UserSvc) Login(user *entity.User, tempPassword string) (*entity.User, error) {
 	if user.Email == "" {
 		return nil, errors.New("email cannot be empty")
 	}
-	if len(user.Password) < 6 {
-		return nil, errors.New("password must be minimum 6 characters")
+	password := []byte(tempPassword)
+	//check password salah
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), password); err != nil {
+		return nil, errors.New("invalid password")
 	}
 	return user, nil
 }

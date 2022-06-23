@@ -1,0 +1,9 @@
+body users/login
+{
+    "email" :"a@gmail.com",
+    "password" : "iparaaaa"
+}
+{
+    "email" :"a2@gmail.com",
+    "password" : "1sampai6"
+}

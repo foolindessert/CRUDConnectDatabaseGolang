@@ -64,8 +64,9 @@ func (h *LoginHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 		var newUser entity.User
 		var validasiUser *entity.User
-		// tempPassword := newUser.Password
+
 		json.NewDecoder(r.Body).Decode(&newUser)
+		tempPassword := newUser.Password
 		newPassword := []byte(newUser.Password)
 		_, err := bcrypt.GenerateFromPassword(newPassword, bcrypt.DefaultCost)
 		if err != nil {
@@ -73,10 +74,7 @@ func (h *LoginHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 		}
 		validasiUser = &newUser
 		serv := service.NewUserSvc()
-		validasiUser, err = serv.Login(validasiUser)
-		if err != nil {
-			fmt.Println(err)
-		}
+
 		// newUser.Password = string(hashedPassword)
 		// fmt.Println(newUser.Password)
 		sqlStatment := `select * from public.users where email = $1`
@@ -87,11 +85,18 @@ func (h *LoginHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 			fmt.Println(err)
 		}
 		fmt.Println(newUser)
-		var token entity.Token
-		token.TokenJwt = serv.GetToken(uint(newUser.Id), newUser.Email, newUser.Password)
-		jsonData, _ := json.Marshal(&token)
-		w.Header().Add("Content-Type", "application/json")
-		w.Write(jsonData)
+		validasiUser, err = serv.Login(validasiUser, tempPassword)
+		if err != nil {
+			fmt.Println(err)
+			w.Write([]byte(fmt.Sprint(err)))
+		} else {
+			var token entity.Token
+			token.TokenJwt = serv.GetToken(uint(newUser.Id), newUser.Email, newUser.Password)
+			jsonData, _ := json.Marshal(&token)
+			w.Header().Add("Content-Type", "application/json")
+			w.Write(jsonData)
+		}
+
 	}
 }
 
