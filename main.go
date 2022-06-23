@@ -48,11 +48,12 @@ func main() {
 	userHandler := handler.NewUserHandler(db)
 	registerHandler := handler.UserRegisterHandler(db)
 	loginHandler := handler.UserLoginHandler(db)
+	// middleware := middleware.NewUserSvc(db)
 	r.HandleFunc("/users", userHandler.UsersHandler)
 	r.HandleFunc("/users/register", registerHandler.RegisterUser)
 	r.HandleFunc("/users/login", loginHandler.LoginUser)
 	r.HandleFunc("/users/{id}", userHandler.UsersHandler)
-
+	// r.Use(middleware.AuthCekToken)
 	fmt.Println("Now listening on port 0.0.0.0" + PORT)
 	srv := &http.Server{
 		Handler:      r,

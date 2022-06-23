@@ -27,7 +27,7 @@ type ResponseUpdateUser struct {
 	Id        int       `json:"id"`
 	Email     string    `json:"email"`
 	Username  string    `json:"username"`
-	Age       string    `json:"age"`
+	Age       int       `json:"age"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
 type ReUser struct {

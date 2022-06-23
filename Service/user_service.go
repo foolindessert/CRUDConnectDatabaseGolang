@@ -14,6 +14,9 @@ type UserIface interface {
 	Register(user *entity.User) (*entity.User, error)
 	Login(user *entity.User, tempPassword string) (*entity.User, error)
 	GetToken(id uint, email string, password string) string
+	CheckToken(compareToken string, id uint, email string, password string) error
+	UpdateUser(user *entity.User) (*entity.User, error)
+	VerivyToken(tempToken string) string
 }
 
 type PhotoIface interface {
@@ -60,6 +63,16 @@ func (u *UserSvc) Login(user *entity.User, tempPassword string) (*entity.User, e
 	return user, nil
 }
 
+func (u *UserSvc) UpdateUser(user *entity.User) (*entity.User, error) {
+	if user.Email == "" {
+		return nil, errors.New("email cannot be empty")
+	}
+	if user.Username == "" {
+		return nil, errors.New("username cannot be empty")
+	}
+	return user, nil
+}
+
 func (u *UserSvc) GetToken(id uint, email string, password string) string {
 	claims := jwt.MapClaims{
 		"id":    id,
@@ -70,5 +83,28 @@ func (u *UserSvc) GetToken(id uint, email string, password string) string {
 	signedToken, _ := parseToken.SignedString([]byte(password))
 
 	return signedToken
+}
 
+func (u *UserSvc) CheckToken(compareToken string, id uint, email string, password string) error {
+	token := u.GetToken(id, email, password)
+	if compareToken == token {
+		fmt.Println("berhasil")
+		return nil
+	} else {
+		fmt.Println("tidak berhasil")
+		return errors.New("username cannot be empty")
+	}
+	//compare
+}
+
+func (u *UserSvc) VerivyToken(TempToken string) string {
+	tokenString := TempToken
+	claims := jwt.MapClaims{}
+	var verivykey []byte
+	token, _ := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		return verivykey, nil
+	})
+
+	fmt.Println(token.Claims.Valid())
+	return "nil"
 }

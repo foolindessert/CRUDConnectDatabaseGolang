@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
+	"strings"
 	"time"
 
 	service "DATABASECRUD/Service"
@@ -94,6 +94,7 @@ func (h *LoginHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 			token.TokenJwt = serv.GetToken(uint(newUser.Id), newUser.Email, newUser.Password)
 			jsonData, _ := json.Marshal(&token)
 			w.Header().Add("Content-Type", "application/json")
+			w.WriteHeader(200)
 			w.Write(jsonData)
 		}
 
@@ -147,6 +148,7 @@ func (h *RegisterHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		jsonData, _ := json.Marshal(&response_Register)
 		w.Header().Add("Content-Type", "application/json")
 		w.Write(jsonData)
+		w.WriteHeader(201)
 	}
 }
 
@@ -247,45 +249,96 @@ func (h *UserHandler) createUsersHandler(w http.ResponseWriter, r *http.Request)
 func (h *UserHandler) updateUserHandler(w http.ResponseWriter, r *http.Request, id string) {
 	if id != "" { // get by id
 		var newUser entity.User
-		json.NewDecoder(r.Body).Decode(&newUser)
-		sqlstatment := `
-		update users set username = $1, email = $2, password = $3, createdat = $4, updatedat = $4 
-		where id = $5;`
+		var validasiUser *entity.User
+		params := mux.Vars(r)
+		id := params["id"]
+		serv := service.NewUserSvc()
 
-		res, err := h.db.Exec(sqlstatment,
+		json.NewDecoder(r.Body).Decode(&newUser)
+		fmt.Println(newUser)
+		var tempUser entity.User
+		sqlstatment3 := `select * from users where id= $1`
+		err := h.db.QueryRow(sqlstatment3, id).
+			Scan(&tempUser.Id, &tempUser.Username, &tempUser.Email, &tempUser.Password, &tempUser.Age, &tempUser.CreatedAt, &tempUser.UpdatedAt)
+		// count, err := res.RowsAffected()
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println(tempUser)
+		reqToken := r.Header.Get("Authorization")
+		splitToken := strings.Split(reqToken, "Bearer ")
+		reqToken = splitToken[1]
+		fmt.Println(reqToken)
+		if err := serv.CheckToken(reqToken, uint(tempUser.Id), tempUser.Email, tempUser.Password); err != nil {
+			panic(err)
+		}
+		validasiUser = &newUser
+
+		validasiUser, err = serv.UpdateUser(validasiUser)
+		if err != nil {
+			panic(err)
+		}
+
+		// json.NewDecoder(r.Body).Decode(&newUser)
+		// fmt.Println(r.Body)
+		fmt.Println(newUser)
+		sqlstatment := `
+		update users set username = $1, email = $2, updated_date = $3
+		where id = $4;`
+
+		_, err = h.db.Exec(sqlstatment,
 			newUser.Username,
 			newUser.Email,
-			newUser.Password,
 			time.Now(),
 			id,
 		)
-
 		if err != nil {
+			fmt.Println("error update")
 			panic(err)
 		}
-		count, err := res.RowsAffected()
+		sqlstatment2 := `select * from users where id= $1`
+		err = h.db.QueryRow(sqlstatment2, id).
+			Scan(&newUser.Id, &newUser.Username, &newUser.Email, &newUser.Password, &newUser.Age, &newUser.CreatedAt, &newUser.UpdatedAt)
+		// count, err := res.RowsAffected()
 		if err != nil {
-			panic(err)
+			fmt.Println(err)
 		}
 
-		w.Write([]byte(fmt.Sprint("User  update ", count)))
+		fmt.Println(newUser)
+		responseUpdateUser := entity.ResponseUpdateUser{
+			Id:        newUser.Id,
+			Email:     newUser.Email,
+			Username:  newUser.Username,
+			Age:       newUser.Age,
+			UpdatedAt: time.Now(),
+		}
+		jsonData, _ := json.Marshal(&responseUpdateUser)
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(200)
+		w.Write(jsonData)
+		// w.Write([]byte(fmt.Sprint("User  update ", count)))
 		return
 	}
 }
 
 func (h *UserHandler) deleteUserHandler(w http.ResponseWriter, r *http.Request, id string) {
-	sqlstament := `DELETE from users where id = $1;`
-	if idInt, err := strconv.Atoi(id); err == nil {
-		res, err := h.db.Exec(sqlstament, idInt)
-		if err != nil {
-			panic(err)
-		}
-		count, err := res.RowsAffected()
-		if err != nil {
-			panic(err)
-		}
-		w.Write([]byte(fmt.Sprint("Delete user rows ", count)))
-		return
-	}
+	serv := service.NewUserSvc()
+	reqToken := r.Header.Get("Authorization")
+	splitToken := strings.Split(reqToken, "Bearer ")
+	reqToken = splitToken[1]
+	serv.VerivyToken(reqToken)
+	// sqlstament := `DELETE from users where id = $1;`
+	// if idInt, err := strconv.Atoi(id); err == nil {
+	// 	res, err := h.db.Exec(sqlstament, idInt)
+	// 	if err != nil {
+	// 		panic(err)
+	// 	}
+	// 	count, err := res.RowsAffected()
+	// 	if err != nil {
+	// 		panic(err)
+	// 	}
+	// 	w.Write([]byte(fmt.Sprint("Delete user rows ", count)))
+	// 	return
+	// }
 
 }
