@@ -16,7 +16,7 @@ type UserIface interface {
 	GetToken(id uint, email string, password string) string
 	CheckToken(compareToken string, id uint, email string, password string) error
 	UpdateUser(user *entity.User) (*entity.User, error)
-	VerivyToken(tempToken string) string
+	VerivyToken(tempToken string) float64
 }
 
 type PhotoIface interface {
@@ -97,14 +97,15 @@ func (u *UserSvc) CheckToken(compareToken string, id uint, email string, passwor
 	//compare
 }
 
-func (u *UserSvc) VerivyToken(TempToken string) string {
+func (u *UserSvc) VerivyToken(TempToken string) float64 {
 	tokenString := TempToken
 	claims := jwt.MapClaims{}
 	var verivykey []byte
 	token, _ := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 		return verivykey, nil
 	})
-
-	fmt.Println(token.Claims.Valid())
-	return "nil"
+	payload := token.Claims.(jwt.MapClaims)
+	id := payload["id"].(float64)
+	// fmt.Println(token.Claims.Valid())
+	return id
 }

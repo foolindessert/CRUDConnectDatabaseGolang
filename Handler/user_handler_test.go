@@ -220,7 +220,7 @@ func TestUserHandler_deleteUserHandler(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.h.deleteUserHandler(tt.args.w, tt.args.r, tt.args.id)
+			tt.h.deleteUserHandler(tt.args.w, tt.args.r)
 		})
 	}
 }

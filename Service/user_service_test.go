@@ -220,7 +220,7 @@ func TestUserSvc_VerivyToken(t *testing.T) {
 		name string
 		u    *UserSvc
 		args args
-		want string
+		want float64
 	}{
 		// TODO: Add test cases.
 	}

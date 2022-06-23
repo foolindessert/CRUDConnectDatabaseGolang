@@ -173,7 +173,7 @@ func (h *UserHandler) UsersHandler(w http.ResponseWriter, r *http.Request) {
 		h.updateUserHandler(w, r, id)
 	case http.MethodDelete:
 		//users/{id}
-		h.deleteUserHandler(w, r, id)
+		h.deleteUserHandler(w, r)
 	}
 }
 
@@ -321,24 +321,26 @@ func (h *UserHandler) updateUserHandler(w http.ResponseWriter, r *http.Request, 
 	}
 }
 
-func (h *UserHandler) deleteUserHandler(w http.ResponseWriter, r *http.Request, id string) {
+func (h *UserHandler) deleteUserHandler(w http.ResponseWriter, r *http.Request) {
 	serv := service.NewUserSvc()
 	reqToken := r.Header.Get("Authorization")
 	splitToken := strings.Split(reqToken, "Bearer ")
 	reqToken = splitToken[1]
-	serv.VerivyToken(reqToken)
-	// sqlstament := `DELETE from users where id = $1;`
-	// if idInt, err := strconv.Atoi(id); err == nil {
-	// 	res, err := h.db.Exec(sqlstament, idInt)
-	// 	if err != nil {
-	// 		panic(err)
-	// 	}
-	// 	count, err := res.RowsAffected()
-	// 	if err != nil {
-	// 		panic(err)
-	// 	}
-	// 	w.Write([]byte(fmt.Sprint("Delete user rows ", count)))
-	// 	return
-	// }
+	temp_id := serv.VerivyToken(reqToken)
+	fmt.Println(temp_id)
+	// if temp_id != nil{}
+	sqlstament := `DELETE from users where id = $1;`
+	_, err := h.db.Exec(sqlstament, temp_id)
+
+	if err != nil {
+		panic(err)
+	}
+	message := entity.Message{
+		Message: "Your account has been successfully deleted",
+	}
+	jsonData, _ := json.Marshal(&message)
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(200)
+	w.Write(jsonData)
 
 }
