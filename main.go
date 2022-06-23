@@ -47,8 +47,10 @@ func main() {
 	r := mux.NewRouter()
 	userHandler := handler.NewUserHandler(db)
 	registerHandler := handler.UserRegisterHandler(db)
+	loginHandler := handler.UserLoginHandler(db)
 	r.HandleFunc("/users", userHandler.UsersHandler)
 	r.HandleFunc("/users/register", registerHandler.RegisterUser)
+	r.HandleFunc("/users/login", loginHandler.LoginUser)
 	r.HandleFunc("/users/{id}", userHandler.UsersHandler)
 
 	fmt.Println("Now listening on port 0.0.0.0" + PORT)
