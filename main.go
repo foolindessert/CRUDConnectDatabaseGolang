@@ -54,6 +54,13 @@ func main() {
 	r.HandleFunc("/users/login", loginHandler.LoginUser)
 	r.HandleFunc("/users/{id}", userHandler.UsersHandler)
 	// r.Use(middleware.AuthCekToken)
+
+	//handler photo
+	photoHandler := handler.NewPhotoHandler(db)
+
+	r.HandleFunc("/photos", photoHandler.PhotoHandler)
+	r.HandleFunc("/photos/{id}", photoHandler.PhotoHandler)
+
 	fmt.Println("Now listening on port 0.0.0.0" + PORT)
 	srv := &http.Server{
 		Handler:      r,

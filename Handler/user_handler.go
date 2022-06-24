@@ -174,6 +174,7 @@ func (h *UserHandler) UsersHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodDelete:
 		//users/{id}
 		h.deleteUserHandler(w, r)
+		
 	}
 }
 
