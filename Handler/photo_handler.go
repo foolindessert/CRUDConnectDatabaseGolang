@@ -5,6 +5,7 @@ import (
 	service "DATABASECRUD/Service"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -112,7 +113,71 @@ func (h *PhotoHandler) PhotoHandler(w http.ResponseWriter, r *http.Request) {
 
 	case http.MethodPut:
 		fmt.Println("Put")
+		if id != "" {
+			serv := service.NewUserSvc()
+			reqToken := r.Header.Get("Authorization")
+			splitToken := strings.Split(reqToken, "Bearer ")
+			reqToken = splitToken[1]
+			temp_id := serv.VerivyToken(reqToken)
+			fmt.Println(temp_id)
+			//penampungan rbody
+			var newPhotos entity.Photo
+			json.NewDecoder(r.Body).Decode(&newPhotos)
+			//check validasi user
+			photoserv := service.NewPhotoSvc()
+			err := photoserv.CekInputanPhoto(newPhotos.Title, newPhotos.Url)
+			if err != nil {
+				w.Write([]byte(fmt.Sprint(err)))
+			} else {
+				sqlStament := `update photos set title = $1, caption = $2 , url = $3, updated_date =$4 where id = $5`
+				//query.scan
+				_, err = h.db.Exec(sqlStament,
+					newPhotos.Title,
+					newPhotos.Caption,
+					newPhotos.Url,
+					time.Now(),
+					id,
+				)
+				if err != nil {
+					fmt.Println("error update")
+					panic(err)
+				}
+				sqlstatment2 := `select * from photos where id= $1`
+				err = h.db.QueryRow(sqlstatment2, id).
+					Scan(&newPhotos.Id, &newPhotos.Title, &newPhotos.Caption, &newPhotos.Url, &newPhotos.User_id, &newPhotos.CreatedAt, &newPhotos.UpdatedAt)
+				// count, err := res.RowsAffected()
+				if err != nil {
+					panic(err)
+				}
+
+				response := entity.ResponsePuPhoto{
+					Id:        newPhotos.Id,
+					Title:     newPhotos.Title,
+					Caption:   newPhotos.Caption,
+					Url:       newPhotos.Url,
+					User_id:   newPhotos.User_id,
+					UpdatedAt: newPhotos.UpdatedAt,
+				}
+
+				jsonData, _ := json.Marshal(&response)
+				w.Header().Add("Content-Type", "application/json")
+				w.Write(jsonData)
+				w.WriteHeader(200)
+			}
+		} else {
+			err = errors.New("id cannot empty")
+			w.Write([]byte(fmt.Sprint(err)))
+		}
 	case http.MethodDelete:
 		fmt.Println("Delete")
+		if id != "" {
+			//cek token
+			// penampung rbody
+			//cek servis
+			//query
+		} else {
+			err = errors.New("id cannot empty")
+			w.Write([]byte(fmt.Sprint(err)))
+		}
 	}
 }

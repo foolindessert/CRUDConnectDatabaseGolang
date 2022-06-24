@@ -16,7 +16,7 @@ func (u *PhotoSvc) CekInputanPhoto(title, url string) error {
 		return errors.New("title cannot be empty")
 	}
 	if url == "" {
-		return errors.New("username cannot be empty")
+		return errors.New("url cannot be empty")
 	}
 	return nil
 }
