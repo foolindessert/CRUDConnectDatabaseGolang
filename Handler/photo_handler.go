@@ -172,9 +172,25 @@ func (h *PhotoHandler) PhotoHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Delete")
 		if id != "" {
 			//cek token
-			// penampung rbody
-			//cek servis
-			//query
+			serv := service.NewUserSvc()
+			reqToken := r.Header.Get("Authorization")
+			splitToken := strings.Split(reqToken, "Bearer ")
+			reqToken = splitToken[1]
+			temp_id := serv.VerivyToken(reqToken)
+			fmt.Println(temp_id)
+			sqlstament := `DELETE from photos where id = $1 and user_id = $2;`
+			_, err := h.db.Exec(sqlstament, id, temp_id)
+
+			if err != nil {
+				panic(err)
+			}
+			message := entity.Message{
+				Message: "Your photo has been successfully deleted",
+			}
+			jsonData, _ := json.Marshal(&message)
+			w.Header().Add("Content-Type", "application/json")
+			w.WriteHeader(200)
+			w.Write(jsonData)
 		} else {
 			err = errors.New("id cannot empty")
 			w.Write([]byte(fmt.Sprint(err)))
