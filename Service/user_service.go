@@ -19,15 +19,12 @@ type UserIface interface {
 	VerivyToken(tempToken string) float64
 }
 
-type PhotoIface interface {
-}
+
 
 type UserSvc struct{}
-type PhotoSvc struct{}
 
-func NewPhotoSvc() PhotoIface {
-	return &PhotoSvc{}
-}
+
+
 
 func NewUserSvc() UserIface {
 	return &UserSvc{}
