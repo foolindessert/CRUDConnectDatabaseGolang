@@ -5,6 +5,7 @@ import (
 	service "DATABASECRUD/Service"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -102,32 +103,54 @@ func (h *CommentHandler) CommentHandler(w http.ResponseWriter, r *http.Request) 
 			w.Write([]byte(fmt.Sprint(err)))
 		} else {
 			fmt.Println("Comment ada isi")
-			sqlStament := `update comment set message = $1, updated_date =$2 where id = $3`
-			//query.scan
-			_, err = h.db.Exec(sqlStament,
-				newComment.Message,
-				time.Now(),
-				id,
-			)
-			if err != nil {
-				fmt.Println("error update")
-				panic(err)
+			if id != "" {
+				sqlStament := `update comment set message = $1, updated_date =$2 where id = $3`
+				//query.scan
+				_, err = h.db.Exec(sqlStament,
+					newComment.Message,
+					time.Now(),
+					id,
+				)
+				if err != nil {
+					fmt.Println("error update")
+					panic(err)
+				}
+				response := entity.ResponseUpdateComment{}
+				sqlstatment2 := `select c.id,p.title,p.caption,p.url,c.user_id,c.updated_date from comment c left join photos p on c.photo_id = p.id where c.id= $1`
+				err = h.db.QueryRow(sqlstatment2, id).
+					Scan(&response.Id, &response.Title, &response.Caption, &response.Url, &response.User_id, &response.UpdatedAt)
+				// count, err := res.RowsAffected()
+				if err != nil {
+					panic(err)
+				}
+				jsonData, _ := json.Marshal(&response)
+				w.Header().Add("Content-Type", "application/json")
+				w.Write(jsonData)
+				w.WriteHeader(200)
+			} else {
+				err = errors.New("id cannot empty")
+				w.Write([]byte(fmt.Sprint(err)))
 			}
-			response := entity.ResponseUpdateComment{}
-			sqlstatment2 := `select c.id,p.title,p.caption,p.url,c.user_id,c.updated_date from comment c left join photos p on c.photo_id = p.id where c.id= $1`
-			err = h.db.QueryRow(sqlstatment2, id).
-				Scan(&response.Id, &response.Title, &response.Caption, &response.Url, &response.User_id, &response.UpdatedAt)
-			// count, err := res.RowsAffected()
-			if err != nil {
-				panic(err)
-			}
-			jsonData, _ := json.Marshal(&response)
-			w.Header().Add("Content-Type", "application/json")
-			w.Write(jsonData)
-			w.WriteHeader(200)
-
 		}
 	case http.MethodDelete:
 		fmt.Println("DELETE")
+		if id != "" {
+			sqlstament := `DELETE from comment where id = $1 and user_id = $2;`
+			_, err := h.db.Exec(sqlstament, id, temp_id)
+
+			if err != nil {
+				panic(err)
+			}
+			message := entity.Message{
+				Message: "Your Comment has been successfully deleted",
+			}
+			jsonData, _ := json.Marshal(&message)
+			w.Header().Add("Content-Type", "application/json")
+			w.WriteHeader(200)
+			w.Write(jsonData)
+		} else {
+			err = errors.New("id cannot empty")
+			w.Write([]byte(fmt.Sprint(err)))
+		}
 	}
 }
