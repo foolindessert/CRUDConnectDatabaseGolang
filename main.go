@@ -64,6 +64,10 @@ func main() {
 	commentHandler := handler.NewCommentHandler(db)
 	r.HandleFunc("/comments", commentHandler.CommentHandler)
 	r.HandleFunc("/comments/{id}", commentHandler.CommentHandler)
+	//handler socialMedia
+	socialmediaHandler := handler.NewSocialMediaHandler(db)
+	r.HandleFunc("/socialmedias", socialmediaHandler.SocilaMediaHandler)
+	r.HandleFunc("/socialmedias/{id}", socialmediaHandler.SocilaMediaHandler)
 
 	fmt.Println("Now listening on port 0.0.0.0" + PORT)
 	srv := &http.Server{

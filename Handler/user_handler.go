@@ -147,8 +147,9 @@ func (h *RegisterHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		}
 		jsonData, _ := json.Marshal(&response_Register)
 		w.Header().Add("Content-Type", "application/json")
-		w.Write(jsonData)
 		w.WriteHeader(201)
+		w.Write(jsonData)
+
 	}
 }
 
@@ -174,7 +175,7 @@ func (h *UserHandler) UsersHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodDelete:
 		//users/{id}
 		h.deleteUserHandler(w, r)
-		
+
 	}
 }
 
