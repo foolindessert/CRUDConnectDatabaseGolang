@@ -86,6 +86,13 @@ type Commment struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
+type ResponseCommentPost struct {
+	Id        int       `json:"id"`
+	Message   string    `json:"message"`
+	Photo_id  int       `json:"photo_id"`
+	User_id   int       `json:"user_id"`
+	CreatedAt time.Time `json:"created_at"`
+}
 
 type ResponseCommentGet struct {
 	Id        int                     `json:"id"`

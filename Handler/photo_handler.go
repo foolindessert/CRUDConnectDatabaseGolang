@@ -26,11 +26,6 @@ func NewPhotoHandler(db *sql.DB) PhotoHandlerInterface {
 	return &PhotoHandler{db: db}
 }
 
-// var (
-// 	db *sql.DB
-
-// 	err error
-// )
 
 func (h *PhotoHandler) PhotoHandler(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)

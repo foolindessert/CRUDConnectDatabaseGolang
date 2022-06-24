@@ -57,9 +57,13 @@ func main() {
 
 	//handler photo
 	photoHandler := handler.NewPhotoHandler(db)
-
 	r.HandleFunc("/photos", photoHandler.PhotoHandler)
 	r.HandleFunc("/photos/{id}", photoHandler.PhotoHandler)
+
+	//handler comment
+	commentHandler := handler.NewCommentHandler(db)
+	r.HandleFunc("/comments", commentHandler.CommentHandler)
+	r.HandleFunc("/comments/{id}", commentHandler.CommentHandler)
 
 	fmt.Println("Now listening on port 0.0.0.0" + PORT)
 	srv := &http.Server{
