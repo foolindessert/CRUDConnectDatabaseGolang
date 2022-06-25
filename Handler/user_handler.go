@@ -2,6 +2,7 @@ package handler
 
 import (
 	entity "DATABASECRUD/Entity"
+	middleware "DATABASECRUD/Middleware"
 	_ "context"
 	"database/sql"
 	"encoding/json"
@@ -250,76 +251,76 @@ func (h *UserHandler) createUsersHandler(w http.ResponseWriter, r *http.Request)
 
 func (h *UserHandler) updateUserHandler(w http.ResponseWriter, r *http.Request, id string) {
 	if id != "" { // get by id
-		var newUser entity.User
-		var validasiUser *entity.User
-		params := mux.Vars(r)
-		id := params["id"]
-		serv := service.NewUserSvc()
+		ctx := r.Context()
+		user := middleware.ForUser(ctx)
 
-		json.NewDecoder(r.Body).Decode(&newUser)
-		fmt.Println(newUser)
-		var tempUser entity.User
-		sqlstatment3 := `select * from users where id= $1`
-		err := h.db.QueryRow(sqlstatment3, id).
-			Scan(&tempUser.Id, &tempUser.Username, &tempUser.Email, &tempUser.Password, &tempUser.Age, &tempUser.CreatedAt, &tempUser.UpdatedAt)
-		// count, err := res.RowsAffected()
-		if err != nil {
-			panic(err)
-		}
-		fmt.Println(tempUser)
-		reqToken := r.Header.Get("Authorization")
-		splitToken := strings.Split(reqToken, "Bearer ")
-		reqToken = splitToken[1]
-		fmt.Println(reqToken)
-		if err := serv.CheckToken(reqToken, uint(tempUser.Id), tempUser.Email, tempUser.Password); err != nil {
-			panic(err)
-		}
-		validasiUser = &newUser
-
-		validasiUser, err = serv.UpdateUser(validasiUser)
-		if err != nil {
-			panic(err)
-		}
-
+		fmt.Println(user)
+		fmt.Println(user.Id)
 		// json.NewDecoder(r.Body).Decode(&newUser)
-		// fmt.Println(r.Body)
-		fmt.Println(newUser)
-		sqlstatment := `
-		update users set username = $1, email = $2, updated_date = $3
-		where id = $4;`
+		// fmt.Println(newUser)
+		// var tempUser entity.User
 
-		_, err = h.db.Exec(sqlstatment,
-			newUser.Username,
-			newUser.Email,
-			time.Now(),
-			id,
-		)
-		if err != nil {
-			fmt.Println("error update")
-			panic(err)
-		}
-		sqlstatment2 := `select * from users where id= $1`
-		err = h.db.QueryRow(sqlstatment2, id).
-			Scan(&newUser.Id, &newUser.Username, &newUser.Email, &newUser.Password, &newUser.Age, &newUser.CreatedAt, &newUser.UpdatedAt)
-		// count, err := res.RowsAffected()
-		if err != nil {
-			fmt.Println(err)
-		}
+		// sqlstatment3 := `select * from users where id= $1`
+		// err := h.db.QueryRow(sqlstatment3, id).
+		// 	Scan(&tempUser.Id, &tempUser.Username, &tempUser.Email, &tempUser.Password, &tempUser.Age, &tempUser.CreatedAt, &tempUser.UpdatedAt)
+		// // count, err := res.RowsAffected()
+		// if err != nil {
+		// 	panic(err)
+		// }
+		// fmt.Println(tempUser)
+		// reqToken := r.Header.Get("Authorization")
+		// splitToken := strings.Split(reqToken, "Bearer ")
+		// reqToken = splitToken[1]
+		// fmt.Println(reqToken)
+		// if err := serv.CheckToken(reqToken, uint(tempUser.Id), tempUser.Email, tempUser.Password); err != nil {
+		// 	panic(err)
+		// }
+		// validasiUser = &newUser
 
-		fmt.Println(newUser)
-		responseUpdateUser := entity.ResponseUpdateUser{
-			Id:        newUser.Id,
-			Email:     newUser.Email,
-			Username:  newUser.Username,
-			Age:       newUser.Age,
-			UpdatedAt: time.Now(),
-		}
-		jsonData, _ := json.Marshal(&responseUpdateUser)
-		w.Header().Add("Content-Type", "application/json")
-		w.WriteHeader(200)
-		w.Write(jsonData)
-		// w.Write([]byte(fmt.Sprint("User  update ", count)))
-		return
+		// validasiUser, err = serv.UpdateUser(validasiUser)
+		// if err != nil {
+		// 	panic(err)
+		// }
+
+		// // json.NewDecoder(r.Body).Decode(&newUser)
+		// // fmt.Println(r.Body)
+		// fmt.Println(newUser)
+		// sqlstatment := `
+		// update users set username = $1, email = $2, updated_date = $3
+		// where id = $4;`
+
+		// _, err = h.db.Exec(sqlstatment,
+		// 	newUser.Username,
+		// 	newUser.Email,
+		// 	time.Now(),
+		// 	id,
+		// )
+		// if err != nil {
+		// 	fmt.Println("error update")
+		// 	panic(err)
+		// }
+		// sqlstatment2 := `select * from users where id= $1`
+		// err = h.db.QueryRow(sqlstatment2, id).
+		// 	Scan(&newUser.Id, &newUser.Username, &newUser.Email, &newUser.Password, &newUser.Age, &newUser.CreatedAt, &newUser.UpdatedAt)
+		// // count, err := res.RowsAffected()
+		// if err != nil {
+		// 	fmt.Println(err)
+		// }
+
+		// fmt.Println(newUser)
+		// responseUpdateUser := entity.ResponseUpdateUser{
+		// 	Id:        newUser.Id,
+		// 	Email:     newUser.Email,
+		// 	Username:  newUser.Username,
+		// 	Age:       newUser.Age,
+		// 	UpdatedAt: time.Now(),
+		// }
+		// jsonData, _ := json.Marshal(&responseUpdateUser)
+		// w.Header().Add("Content-Type", "application/json")
+		// w.WriteHeader(200)
+		// w.Write(jsonData)
+		// // w.Write([]byte(fmt.Sprint("User  update ", count)))
+		// return
 	}
 }
 

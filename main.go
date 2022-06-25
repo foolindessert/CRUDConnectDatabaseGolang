@@ -9,6 +9,7 @@ import (
 	"time"
 
 	handler "DATABASECRUD/Handler"
+	middleware "DATABASECRUD/Middleware"
 
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
@@ -49,10 +50,11 @@ func main() {
 	registerHandler := handler.UserRegisterHandler(db)
 	loginHandler := handler.UserLoginHandler(db)
 	// middleware := middleware.NewUserSvc(db)
-	r.HandleFunc("/users", userHandler.UsersHandler)
+	// r.HandleFunc("/users", userHandler.UsersHandler)
 	r.HandleFunc("/users/register", registerHandler.RegisterUser)
 	r.HandleFunc("/users/login", loginHandler.LoginUser)
-	r.HandleFunc("/users/{id}", userHandler.UsersHandler)
+	// r.HandleFunc("/users/{id}", userHandler.UsersHandler)
+	r.Handle("/users/{id}", middleware.AuthCekToken(http.HandlerFunc(userHandler.UsersHandler))).Methods("PUT")
 	// r.Use(middleware.AuthCekToken)
 
 	//handler photo
