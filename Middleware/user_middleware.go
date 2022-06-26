@@ -21,15 +21,20 @@ func AuthCekToken(next http.Handler) http.Handler {
 		reqToken := r.Header.Get("Authorization")
 		splitToken := strings.Split(reqToken, "Bearer ")
 		reqToken = splitToken[1]
-		temp_id := serv.VerivyToken(reqToken)
+		// fmt.Println(reqToken)
+		fmt.Println("Lolos token")
+		temp_id, err := serv.VerivyToken(reqToken)
+		if err != nil {
+			w.Write([]byte(fmt.Sprint(err)))
+		}
+		fmt.Print("nilai token id")
 		fmt.Println(temp_id)
 		user := entity.User{Id: int(temp_id)}
-		fmt.Println(user)
-		fmt.Println(r.Context())
+
 		ctx := context.WithValue(r.Context(), tempKey, &user)
-		fmt.Println(ctx)
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
+
 	})
 }
 

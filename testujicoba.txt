@@ -4,3 +4,8 @@ body users/login
     "email" :"a2@gmail.com",
     "password" : "1sampai6"
 }
+
+{
+    "email":"a3@gmail.com",
+    "password":"1sampai6"
+}

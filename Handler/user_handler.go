@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	service "DATABASECRUD/Service"
@@ -71,7 +70,8 @@ func (h *LoginHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 		newPassword := []byte(newUser.Password)
 		_, err := bcrypt.GenerateFromPassword(newPassword, bcrypt.DefaultCost)
 		if err != nil {
-			panic(err)
+			w.Write([]byte(fmt.Sprint(err)))
+
 		}
 		validasiUser = &newUser
 		serv := service.NewUserSvc()
@@ -83,13 +83,15 @@ func (h *LoginHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 		err = h.db.QueryRow(sqlStatment, newUser.Email).
 			Scan(&newUser.Id, &newUser.Username, &newUser.Email, &newUser.Password, &newUser.Age, &newUser.CreatedAt, &newUser.UpdatedAt)
 		if err != nil {
-			fmt.Println(err)
+			w.Write([]byte(fmt.Sprint(err)))
+
 		}
 		fmt.Println(newUser)
 		validasiUser, err = serv.Login(validasiUser, tempPassword)
 		if err != nil {
 			fmt.Println(err)
 			w.Write([]byte(fmt.Sprint(err)))
+
 		} else {
 			var token entity.Token
 			token.TokenJwt = serv.GetToken(uint(newUser.Id), newUser.Email, newUser.Password)
@@ -114,13 +116,15 @@ func (h *RegisterHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		newPassword := []byte(newUser.Password)
 		hashedPassword, err := bcrypt.GenerateFromPassword(newPassword, bcrypt.DefaultCost)
 		if err != nil {
-			panic(err)
+			w.Write([]byte(fmt.Sprint(err)))
+
 		}
 		validasiUser = &newUser
 		serv := service.NewUserSvc()
 		validasiUser, err = serv.Register(validasiUser)
 		if err != nil {
-			panic(err)
+			w.Write([]byte(fmt.Sprint(err)))
+
 		}
 		// newUser.Password = string(newPassword)
 		// fmt.Println(newUser.Password)
@@ -159,17 +163,6 @@ func (h *UserHandler) UsersHandler(w http.ResponseWriter, r *http.Request) {
 	id := params["id"]
 
 	switch r.Method {
-	case http.MethodGet:
-		//users/{id}
-		if id != "" { // get by id
-			h.getUsersByIDHandler(w, r, id)
-		} else { // get all
-			//users
-			h.getUsersHandler(w, r)
-		}
-	case http.MethodPost:
-		//users
-		h.createUsersHandler(w, r)
 	case http.MethodPut:
 		//users/{id}
 		h.updateUserHandler(w, r, id)
@@ -179,76 +172,6 @@ func (h *UserHandler) UsersHandler(w http.ResponseWriter, r *http.Request) {
 
 	}
 }
-
-//user
-func (h *UserHandler) getUsersHandler(w http.ResponseWriter, r *http.Request) {
-	users := []*entity.User{}
-	sqlStatment := `SELECT  * from users` //sesuai dengan nama table
-
-	rows, err := h.db.Query(sqlStatment)
-	if err != nil {
-		panic(err)
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var user entity.User
-		if serr := rows.Scan(&user.Id, &user.Username, &user.Email, &user.Password, &user.Age, &user.CreatedAt, &user.UpdatedAt); serr != nil {
-			fmt.Println("Scan error", serr)
-		}
-		users = append(users, &user)
-	}
-	jsonData, _ := json.Marshal(&users)
-	w.Header().Add("Content-Type", "application/json")
-	w.Write(jsonData)
-}
-
-func (h *UserHandler) getUsersByIDHandler(w http.ResponseWriter, r *http.Request, id string) {
-	users := []*entity.User{}
-	sqlStatment := `SELECT  * from users where id = ` + `'` + id + `'` //sesuai dengan nama table
-	rows, err := h.db.Query(sqlStatment)
-	if err != nil {
-		panic(err)
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var user entity.User
-		if serr := rows.Scan(&user.Id, &user.Username, &user.Email, &user.Password, &user.Age, &user.CreatedAt, &user.UpdatedAt); serr != nil {
-			fmt.Println("Scan error", serr)
-		}
-		users = append(users, &user)
-	}
-	jsonData, _ := json.Marshal(&users)
-	w.Header().Add("Content-Type", "application/json")
-	w.Write(jsonData)
-}
-
-func (h *UserHandler) createUsersHandler(w http.ResponseWriter, r *http.Request) {
-
-	var newUser entity.User
-	json.NewDecoder(r.Body).Decode(&newUser)
-	sqlStatment := `insert into users
-	(username,email,password,age,Created_date,Updated_date)
-	values ($1,$2,$3,$4,$5,$5)` //sesuai dengan nama table
-	res, err := h.db.Exec(sqlStatment,
-		newUser.Username,
-		newUser.Email,
-		newUser.Password,
-		newUser.Age,
-		time.Now(),
-	)
-
-	if err != nil {
-		panic(err)
-	}
-	count, err := res.RowsAffected()
-	if err != nil {
-		panic(err)
-	}
-
-	w.Write([]byte(fmt.Sprint("User  update ", count)))
-	return
-}
-
 func (h *UserHandler) updateUserHandler(w http.ResponseWriter, r *http.Request, id string) {
 	if id != "" { // get by id
 		ctx := r.Context()
@@ -256,87 +179,69 @@ func (h *UserHandler) updateUserHandler(w http.ResponseWriter, r *http.Request, 
 
 		fmt.Println(user)
 		fmt.Println(user.Id)
-		// json.NewDecoder(r.Body).Decode(&newUser)
-		// fmt.Println(newUser)
-		// var tempUser entity.User
+		var newUser entity.User
+		json.NewDecoder(r.Body).Decode(&newUser)
+		fmt.Println(newUser)
+		var validasiUser *entity.User
+		validasiUser = &newUser
+		serv := service.NewUserSvc()
+		validasiUser, err = serv.UpdateUser(validasiUser)
+		if err != nil {
 
-		// sqlstatment3 := `select * from users where id= $1`
-		// err := h.db.QueryRow(sqlstatment3, id).
-		// 	Scan(&tempUser.Id, &tempUser.Username, &tempUser.Email, &tempUser.Password, &tempUser.Age, &tempUser.CreatedAt, &tempUser.UpdatedAt)
-		// // count, err := res.RowsAffected()
-		// if err != nil {
-		// 	panic(err)
-		// }
-		// fmt.Println(tempUser)
-		// reqToken := r.Header.Get("Authorization")
-		// splitToken := strings.Split(reqToken, "Bearer ")
-		// reqToken = splitToken[1]
-		// fmt.Println(reqToken)
-		// if err := serv.CheckToken(reqToken, uint(tempUser.Id), tempUser.Email, tempUser.Password); err != nil {
-		// 	panic(err)
-		// }
-		// validasiUser = &newUser
+		}
+		sqlstatment := `
+		update users set username = $1, email = $2, updated_date = $3
+		where id = $4;`
 
-		// validasiUser, err = serv.UpdateUser(validasiUser)
-		// if err != nil {
-		// 	panic(err)
-		// }
+		_, err = h.db.Exec(sqlstatment,
+			newUser.Username,
+			newUser.Email,
+			time.Now(),
+			id,
+		)
+		if err != nil {
+			fmt.Println("error update")
+			w.Write([]byte(fmt.Sprint(err)))
 
-		// // json.NewDecoder(r.Body).Decode(&newUser)
-		// // fmt.Println(r.Body)
-		// fmt.Println(newUser)
-		// sqlstatment := `
-		// update users set username = $1, email = $2, updated_date = $3
-		// where id = $4;`
+		}
+		sqlstatment2 := `select * from users where id= $1`
+		err = h.db.QueryRow(sqlstatment2, id).
+			Scan(&newUser.Id, &newUser.Username, &newUser.Email, &newUser.Password, &newUser.Age, &newUser.CreatedAt, &newUser.UpdatedAt)
+		// count, err := res.RowsAffected()
+		if err != nil {
+			w.Write([]byte(fmt.Sprint(err)))
 
-		// _, err = h.db.Exec(sqlstatment,
-		// 	newUser.Username,
-		// 	newUser.Email,
-		// 	time.Now(),
-		// 	id,
-		// )
-		// if err != nil {
-		// 	fmt.Println("error update")
-		// 	panic(err)
-		// }
-		// sqlstatment2 := `select * from users where id= $1`
-		// err = h.db.QueryRow(sqlstatment2, id).
-		// 	Scan(&newUser.Id, &newUser.Username, &newUser.Email, &newUser.Password, &newUser.Age, &newUser.CreatedAt, &newUser.UpdatedAt)
-		// // count, err := res.RowsAffected()
-		// if err != nil {
-		// 	fmt.Println(err)
-		// }
+		}
 
-		// fmt.Println(newUser)
-		// responseUpdateUser := entity.ResponseUpdateUser{
-		// 	Id:        newUser.Id,
-		// 	Email:     newUser.Email,
-		// 	Username:  newUser.Username,
-		// 	Age:       newUser.Age,
-		// 	UpdatedAt: time.Now(),
-		// }
-		// jsonData, _ := json.Marshal(&responseUpdateUser)
-		// w.Header().Add("Content-Type", "application/json")
-		// w.WriteHeader(200)
-		// w.Write(jsonData)
-		// // w.Write([]byte(fmt.Sprint("User  update ", count)))
-		// return
+		fmt.Println(newUser)
+		responseUpdateUser := entity.ResponseUpdateUser{
+			Id:        newUser.Id,
+			Email:     newUser.Email,
+			Username:  newUser.Username,
+			Age:       newUser.Age,
+			UpdatedAt: time.Now(),
+		}
+		jsonData, _ := json.Marshal(&responseUpdateUser)
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(200)
+		w.Write(jsonData)
+		return
 	}
 }
 
 func (h *UserHandler) deleteUserHandler(w http.ResponseWriter, r *http.Request) {
-	serv := service.NewUserSvc()
-	reqToken := r.Header.Get("Authorization")
-	splitToken := strings.Split(reqToken, "Bearer ")
-	reqToken = splitToken[1]
-	temp_id := serv.VerivyToken(reqToken)
-	fmt.Println(temp_id)
+	ctx := r.Context()
+	user := middleware.ForUser(ctx)
+
+	fmt.Println(user)
+	fmt.Println(user.Id)
 	// if temp_id != nil{}
 	sqlstament := `DELETE from users where id = $1;`
-	_, err := h.db.Exec(sqlstament, temp_id)
+	_, err := h.db.Exec(sqlstament, user.Id)
 
 	if err != nil {
-		panic(err)
+		w.Write([]byte(fmt.Sprint(err)))
+
 	}
 	message := entity.Message{
 		Message: "Your account has been successfully deleted",

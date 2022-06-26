@@ -2,13 +2,13 @@ package handler
 
 import (
 	entity "DATABASECRUD/Entity"
+	middleware "DATABASECRUD/Middleware"
 	service "DATABASECRUD/Service"
 	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/gorilla/mux"
 )
@@ -29,12 +29,11 @@ func (h *SocilaMediaHandler) SocilaMediaHandler(w http.ResponseWriter, r *http.R
 	params := mux.Vars(r)
 	id := params["id"]
 	fmt.Println(id)
-	serv := service.NewUserSvc()
-	reqToken := r.Header.Get("Authorization")
-	splitToken := strings.Split(reqToken, "Bearer ")
-	reqToken = splitToken[1]
-	temp_id := serv.VerivyToken(reqToken)
-	fmt.Println(temp_id)
+	ctx := r.Context()
+	user := middleware.ForUser(ctx)
+
+	fmt.Println(user)
+	fmt.Println(user.Id)
 	socialmediaserv := service.NewSocialMediaSv()
 	switch r.Method {
 	case http.MethodGet:
@@ -72,7 +71,7 @@ func (h *SocilaMediaHandler) SocilaMediaHandler(w http.ResponseWriter, r *http.R
 			(name,social_media_url,user_id)
 			values ($1,$2,$3) Returning id`
 			// intId, err := strconv.Atoi(id)
-			err = h.db.QueryRow(sqlStament, newSocialMedia.Name, newSocialMedia.Social_Media_Url, temp_id).Scan(&newSocialMedia.Id)
+			err = h.db.QueryRow(sqlStament, newSocialMedia.Name, newSocialMedia.Social_Media_Url, user.Id).Scan(&newSocialMedia.Id)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -83,7 +82,7 @@ func (h *SocilaMediaHandler) SocilaMediaHandler(w http.ResponseWriter, r *http.R
 			err = h.db.QueryRow(sqlstatment2, newSocialMedia.Id).
 				Scan(&response.Id, &response.Name, &response.Social_Media_Url, &response.User_id, &response.CreatedAt)
 			if err != nil {
-				panic(err)
+				w.Write([]byte(fmt.Sprint(err)))
 			}
 
 			jsonData, _ := json.Marshal(&response)
@@ -111,7 +110,7 @@ func (h *SocilaMediaHandler) SocilaMediaHandler(w http.ResponseWriter, r *http.R
 				)
 				if err != nil {
 					fmt.Println("error update")
-					panic(err)
+					w.Write([]byte(fmt.Sprint(err)))
 				}
 				response := entity.ResponseSocialMediaPut{}
 				sqlstatment2 := `select s.id,s.name,s.social_media_url,s.user_id,u.updated_date from social_media s left join users u on s.user_id = u.id where s.id = $1`
@@ -119,7 +118,7 @@ func (h *SocilaMediaHandler) SocilaMediaHandler(w http.ResponseWriter, r *http.R
 					Scan(&response.Id, &response.Name, &response.Social_Media_Url, &response.User_id, &response.UpdatedAt)
 				// count, err := res.RowsAffected()
 				if err != nil {
-					panic(err)
+					w.Write([]byte(fmt.Sprint(err)))
 				}
 				jsonData, _ := json.Marshal(&response)
 				w.Header().Add("Content-Type", "application/json")
@@ -135,10 +134,10 @@ func (h *SocilaMediaHandler) SocilaMediaHandler(w http.ResponseWriter, r *http.R
 		fmt.Println("DELETE")
 		if id != "" {
 			sqlstament := `DELETE from social_media where id = $1 and user_id = $2;`
-			_, err := h.db.Exec(sqlstament, id, temp_id)
+			_, err := h.db.Exec(sqlstament, id, user.Id)
 
 			if err != nil {
-				panic(err)
+				w.Write([]byte(fmt.Sprint(err)))
 			}
 			message := entity.Message{
 				Message: "Your SocialMedia has been successfully deleted",

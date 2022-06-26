@@ -2,13 +2,13 @@ package handler
 
 import (
 	entity "DATABASECRUD/Entity"
+	middleware "DATABASECRUD/Middleware"
 	service "DATABASECRUD/Service"
 	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -30,12 +30,11 @@ func (h *CommentHandler) CommentHandler(w http.ResponseWriter, r *http.Request) 
 	params := mux.Vars(r)
 	id := params["id"]
 	fmt.Println(id)
-	serv := service.NewUserSvc()
-	reqToken := r.Header.Get("Authorization")
-	splitToken := strings.Split(reqToken, "Bearer ")
-	reqToken = splitToken[1]
-	temp_id := serv.VerivyToken(reqToken)
-	fmt.Println(temp_id)
+	ctx := r.Context()
+	user := middleware.ForUser(ctx)
+
+	fmt.Println(user)
+	fmt.Println(user.Id)
 	commentserv := service.NewCommentSvc()
 	switch r.Method {
 	case http.MethodGet:
@@ -44,14 +43,14 @@ func (h *CommentHandler) CommentHandler(w http.ResponseWriter, r *http.Request) 
 		select c.id, c.message,c.photo_id,c.user_id,c.updated_date,c.created_date,u.id,u.email,u.username,p.id,p.title,p.caption,p.url,p.user_id from comment c left join photos p on c.photo_id = p.id left join users u on c.user_id = u.id`
 		rows, err := h.db.Query(sqlStament)
 		if err != nil {
-			fmt.Println(err)
+			w.Write([]byte(fmt.Sprint(err)))
 		}
 		defer rows.Close()
 		comments := []*entity.ResponseCommentGet{}
 		for rows.Next() {
 			var comment entity.ResponseCommentGet
 			if serr := rows.Scan(&comment.Id, &comment.Message, &comment.Photo_id, &comment.User_id, &comment.UpdatedAt, &comment.CreatedAt, &comment.User.Id, &comment.User.Email, &comment.User.Username, &comment.Photo.Id, &comment.Photo.Title, &comment.Photo.Caption, &comment.Photo.Url, &comment.Photo.User_id); serr != nil {
-				fmt.Println("Scan error", serr)
+				w.Write([]byte(fmt.Sprint(serr)))
 			}
 			comments = append(comments, &comment)
 		}
@@ -74,19 +73,19 @@ func (h *CommentHandler) CommentHandler(w http.ResponseWriter, r *http.Request) 
 			values ($1,$2,$3,$4,$4) Returning id`
 			// intId, err := strconv.Atoi(id)
 			err = h.db.QueryRow(sqlStament,
-				temp_id,
+				user.Id,
 				newComment.Photo_id,
 				newComment.Message,
 				time.Now(),
 			).Scan(&newComment.Id)
 			if err != nil {
-				fmt.Println(err)
+				w.Write([]byte(fmt.Sprint(err)))
 			}
 			response := entity.ResponseCommentPost{
 				Id:        newComment.Id,
 				Message:   newComment.Message,
 				Photo_id:  newComment.Photo_id,
-				User_id:   int(temp_id),
+				User_id:   int(user.Id),
 				CreatedAt: time.Now(),
 			}
 
@@ -116,7 +115,7 @@ func (h *CommentHandler) CommentHandler(w http.ResponseWriter, r *http.Request) 
 				)
 				if err != nil {
 					fmt.Println("error update")
-					panic(err)
+					w.Write([]byte(fmt.Sprint(err)))
 				}
 				response := entity.ResponseUpdateComment{}
 				sqlstatment2 := `select c.id,p.title,p.caption,p.url,c.user_id,c.updated_date from comment c left join photos p on c.photo_id = p.id where c.id= $1`
@@ -124,7 +123,7 @@ func (h *CommentHandler) CommentHandler(w http.ResponseWriter, r *http.Request) 
 					Scan(&response.Id, &response.Title, &response.Caption, &response.Url, &response.User_id, &response.UpdatedAt)
 				// count, err := res.RowsAffected()
 				if err != nil {
-					panic(err)
+					w.Write([]byte(fmt.Sprint(err)))
 				}
 				jsonData, _ := json.Marshal(&response)
 				w.Header().Add("Content-Type", "application/json")
@@ -140,10 +139,10 @@ func (h *CommentHandler) CommentHandler(w http.ResponseWriter, r *http.Request) 
 		fmt.Println("DELETE")
 		if id != "" {
 			sqlstament := `DELETE from comment where id = $1 and user_id = $2;`
-			_, err := h.db.Exec(sqlstament, id, temp_id)
+			_, err := h.db.Exec(sqlstament, id, user.Id)
 
 			if err != nil {
-				panic(err)
+				w.Write([]byte(fmt.Sprint(err)))
 			}
 			message := entity.Message{
 				Message: "Your Comment has been successfully deleted",

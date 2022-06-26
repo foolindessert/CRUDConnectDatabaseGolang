@@ -16,15 +16,10 @@ type UserIface interface {
 	GetToken(id uint, email string, password string) string
 	CheckToken(compareToken string, id uint, email string, password string) error
 	UpdateUser(user *entity.User) (*entity.User, error)
-	VerivyToken(tempToken string) float64
+	VerivyToken(tempToken string) (float64, error)
 }
 
-
-
 type UserSvc struct{}
-
-
-
 
 func NewUserSvc() UserIface {
 	return &UserSvc{}
@@ -94,7 +89,7 @@ func (u *UserSvc) CheckToken(compareToken string, id uint, email string, passwor
 	//compare
 }
 
-func (u *UserSvc) VerivyToken(TempToken string) float64 {
+func (u *UserSvc) VerivyToken(TempToken string) (float64, error) {
 	tokenString := TempToken
 	claims := jwt.MapClaims{}
 	var verivykey []byte
@@ -103,6 +98,13 @@ func (u *UserSvc) VerivyToken(TempToken string) float64 {
 	})
 	payload := token.Claims.(jwt.MapClaims)
 	id := payload["id"].(float64)
+	if !isIntegral(id) {
+		return 0, errors.New("invalid token")
+	}
 	// fmt.Println(token.Claims.Valid())
-	return id
+	return id, nil
+}
+
+func isIntegral(val float64) bool {
+	return val == float64(int(val))
 }
