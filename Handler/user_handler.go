@@ -6,6 +6,7 @@ import (
 	_ "context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -83,22 +84,23 @@ func (h *LoginHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 		err = h.db.QueryRow(sqlStatment, newUser.Email).
 			Scan(&newUser.Id, &newUser.Username, &newUser.Email, &newUser.Password, &newUser.Age, &newUser.CreatedAt, &newUser.UpdatedAt)
 		if err != nil {
-			w.Write([]byte(fmt.Sprint(err)))
-
-		}
-		fmt.Println(newUser)
-		validasiUser, err = serv.Login(validasiUser, tempPassword)
-		if err != nil {
-			fmt.Println(err)
-			w.Write([]byte(fmt.Sprint(err)))
+			w.Write([]byte(fmt.Sprint(errors.New("email not register"))))
 
 		} else {
-			var token entity.Token
-			token.TokenJwt = serv.GetToken(uint(newUser.Id), newUser.Email, newUser.Password)
-			jsonData, _ := json.Marshal(&token)
-			w.Header().Add("Content-Type", "application/json")
-			w.WriteHeader(200)
-			w.Write(jsonData)
+			fmt.Println(newUser)
+			validasiUser, err = serv.Login(validasiUser, tempPassword)
+			if err != nil {
+				fmt.Println(err)
+				w.Write([]byte(fmt.Sprint(err)))
+
+			} else {
+				var token entity.Token
+				token.TokenJwt = serv.GetToken(uint(newUser.Id), newUser.Email, newUser.Password)
+				jsonData, _ := json.Marshal(&token)
+				w.Header().Add("Content-Type", "application/json")
+				w.WriteHeader(200)
+				w.Write(jsonData)
+			}
 		}
 
 	}
@@ -125,35 +127,37 @@ func (h *RegisterHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			w.Write([]byte(fmt.Sprint(err)))
 
+		} else {
+			// newUser.Password = string(newPassword)
+			// fmt.Println(newUser.Password)
+			newUser.Password = string(hashedPassword)
+			sqlStatment := `insert into users
+			(username,email,password,age,created_date,updated_date)
+			values ($1,$2,$3,$4,$5,$5) Returning id` //sesuai dengan nama table
+			err = h.db.QueryRow(sqlStatment,
+				newUser.Username,
+				newUser.Email,
+				newUser.Password,
+				newUser.Age,
+				time.Now(),
+			).Scan(&newUser.Id)
+			if err != nil {
+				w.Write([]byte(fmt.Sprint(err)))
+			} else {
+				// fmt.Println(newUser)
+				// fmt.Println(newUser.Id)
+				response_Register := entity.ResponseRegister{
+					Age:      newUser.Age,
+					Email:    newUser.Email,
+					Id:       newUser.Id,
+					Username: newUser.Username,
+				}
+				jsonData, _ := json.Marshal(&response_Register)
+				w.Header().Add("Content-Type", "application/json")
+				w.WriteHeader(201)
+				w.Write(jsonData)
+			}
 		}
-		// newUser.Password = string(newPassword)
-		// fmt.Println(newUser.Password)
-		newUser.Password = string(hashedPassword)
-		sqlStatment := `insert into users
-		(username,email,password,age,created_date,updated_date)
-		values ($1,$2,$3,$4,$5,$5) Returning id` //sesuai dengan nama table
-		err = h.db.QueryRow(sqlStatment,
-			newUser.Username,
-			newUser.Email,
-			newUser.Password,
-			newUser.Age,
-			time.Now(),
-		).Scan(&newUser.Id)
-		if err != nil {
-			fmt.Println(err)
-		}
-		// fmt.Println(newUser)
-		// fmt.Println(newUser.Id)
-		response_Register := entity.ResponseRegister{
-			Age:      newUser.Age,
-			Email:    newUser.Email,
-			Id:       newUser.Id,
-			Username: newUser.Username,
-		}
-		jsonData, _ := json.Marshal(&response_Register)
-		w.Header().Add("Content-Type", "application/json")
-		w.WriteHeader(201)
-		w.Write(jsonData)
 
 	}
 }
@@ -187,45 +191,47 @@ func (h *UserHandler) updateUserHandler(w http.ResponseWriter, r *http.Request, 
 		serv := service.NewUserSvc()
 		validasiUser, err = serv.UpdateUser(validasiUser)
 		if err != nil {
-
-		}
-		sqlstatment := `
-		update users set username = $1, email = $2, updated_date = $3
-		where id = $4;`
-
-		_, err = h.db.Exec(sqlstatment,
-			newUser.Username,
-			newUser.Email,
-			time.Now(),
-			id,
-		)
-		if err != nil {
-			fmt.Println("error update")
 			w.Write([]byte(fmt.Sprint(err)))
+		} else {
+			sqlstatment := `
+			update users set username = $1, email = $2, updated_date = $3
+			where id = $4;`
 
-		}
-		sqlstatment2 := `select * from users where id= $1`
-		err = h.db.QueryRow(sqlstatment2, id).
-			Scan(&newUser.Id, &newUser.Username, &newUser.Email, &newUser.Password, &newUser.Age, &newUser.CreatedAt, &newUser.UpdatedAt)
-		// count, err := res.RowsAffected()
-		if err != nil {
-			w.Write([]byte(fmt.Sprint(err)))
+			_, err = h.db.Exec(sqlstatment,
+				newUser.Username,
+				newUser.Email,
+				time.Now(),
+				id,
+			)
+			if err != nil {
+				fmt.Println("error update")
+				w.Write([]byte(fmt.Sprint(errors.New("user id don't exists"))))
 
+			} else {
+				sqlstatment2 := `select * from users where id= $1`
+				err = h.db.QueryRow(sqlstatment2, id).
+					Scan(&newUser.Id, &newUser.Username, &newUser.Email, &newUser.Password, &newUser.Age, &newUser.CreatedAt, &newUser.UpdatedAt)
+				// count, err := res.RowsAffected()
+				if err != nil {
+					w.Write([]byte(fmt.Sprint(errors.New("user id don't exists"))))
+				} else {
+					fmt.Println(newUser)
+					responseUpdateUser := entity.ResponseUpdateUser{
+						Id:        newUser.Id,
+						Email:     newUser.Email,
+						Username:  newUser.Username,
+						Age:       newUser.Age,
+						UpdatedAt: time.Now(),
+					}
+					jsonData, _ := json.Marshal(&responseUpdateUser)
+					w.Header().Add("Content-Type", "application/json")
+					w.WriteHeader(200)
+					w.Write(jsonData)
+					return
+				}
+			}
 		}
 
-		fmt.Println(newUser)
-		responseUpdateUser := entity.ResponseUpdateUser{
-			Id:        newUser.Id,
-			Email:     newUser.Email,
-			Username:  newUser.Username,
-			Age:       newUser.Age,
-			UpdatedAt: time.Now(),
-		}
-		jsonData, _ := json.Marshal(&responseUpdateUser)
-		w.Header().Add("Content-Type", "application/json")
-		w.WriteHeader(200)
-		w.Write(jsonData)
-		return
 	}
 }
 
