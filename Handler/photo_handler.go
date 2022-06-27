@@ -157,8 +157,8 @@ func (h *PhotoHandler) PhotoHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Delete")
 		if id != "" {
 
-			sqlstament := `DELETE from photos where id = $1 ;`
-			_, err := h.db.Exec(sqlstament, id)
+			sqlstament := `DELETE from photos where id = $1 and user_id = $2 ;`
+			_, err := h.db.Exec(sqlstament, user.Id)
 
 			if err != nil {
 				w.Write([]byte(fmt.Sprint(err)))
