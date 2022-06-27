@@ -50,7 +50,7 @@ func (u *UserSvc) Login(user *entity.User, tempPassword string) (*entity.User, e
 	password := []byte(tempPassword)
 	//check password salah
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), password); err != nil {
-		return nil, errors.New("invalid password")
+		return nil, errors.New("invalid email/password")
 	}
 	return user, nil
 }
