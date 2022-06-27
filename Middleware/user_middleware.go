@@ -4,6 +4,7 @@ import (
 	entity "DATABASECRUD/Entity"
 	service "DATABASECRUD/Service"
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -20,19 +21,25 @@ func AuthCekToken(next http.Handler) http.Handler {
 		serv := service.NewUserSvc()
 		reqToken := r.Header.Get("Authorization")
 		splitToken := strings.Split(reqToken, "Bearer ")
-		reqToken = splitToken[1]
-		// fmt.Println(reqToken)
-		fmt.Println("Lolos token")
-		temp_id, err := serv.VerivyToken(reqToken)
-		if err != nil {
-			w.Write([]byte(fmt.Sprint(err)))
-		}
-		fmt.Print("nilai token id")
-		fmt.Println(temp_id)
-		user := entity.User{Id: int(temp_id)}
+		fmt.Println(splitToken)
+		if len(splitToken) > 1 {
+			reqToken = splitToken[1]
+			// fmt.Println(reqToken)
+			fmt.Println("Lolos token")
+			temp_id, err := serv.VerivyToken(reqToken)
+			if err != nil {
+				w.Write([]byte(fmt.Sprint(err)))
+			}
+			fmt.Print("nilai token id")
+			fmt.Println(temp_id)
+			user := entity.User{Id: int(temp_id)}
 
-		ctx := context.WithValue(r.Context(), tempKey, &user)
-		r = r.WithContext(ctx)
+			ctx := context.WithValue(r.Context(), tempKey, &user)
+			r = r.WithContext(ctx)
+
+		} else {
+			w.Write([]byte(fmt.Sprint(errors.New("token cannot be empty"))))
+		}
 		next.ServeHTTP(w, r)
 
 	})

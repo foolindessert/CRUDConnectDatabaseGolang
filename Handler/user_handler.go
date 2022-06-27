@@ -242,19 +242,22 @@ func (h *UserHandler) deleteUserHandler(w http.ResponseWriter, r *http.Request) 
 	fmt.Println(user)
 	fmt.Println(user.Id)
 	// if temp_id != nil{}
-	sqlstament := `DELETE from users where id = $1;`
-	_, err := h.db.Exec(sqlstament, user.Id)
+	if user.Id != 0 {
+		sqlstament := `DELETE from users where id = $1;`
+		_, err := h.db.Exec(sqlstament, user.Id)
 
-	if err != nil {
-		w.Write([]byte(fmt.Sprint(err)))
+		if err != nil {
+			w.Write([]byte(fmt.Sprint(err)))
 
+		} else {
+			message := entity.Message{
+				Message: "Your account has been successfully deleted",
+			}
+			jsonData, _ := json.Marshal(&message)
+			w.WriteHeader(200)
+			w.Header().Add("Content-Type", "application/json")
+			w.Write(jsonData)
+		}
 	}
-	message := entity.Message{
-		Message: "Your account has been successfully deleted",
-	}
-	jsonData, _ := json.Marshal(&message)
-	w.Header().Add("Content-Type", "application/json")
-	w.WriteHeader(200)
-	w.Write(jsonData)
 
 }

@@ -96,6 +96,7 @@ func (u *UserSvc) VerivyToken(TempToken string) (float64, error) {
 	token, _ := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 		return verivykey, nil
 	})
+
 	payload := token.Claims.(jwt.MapClaims)
 	id := payload["id"].(float64)
 	if !isIntegral(id) {
