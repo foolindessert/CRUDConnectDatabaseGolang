@@ -3,13 +3,13 @@ package handler
 import (
 	entity "DATABASECRUD/Entity"
 	middleware "DATABASECRUD/Middleware"
+	repo "DATABASECRUD/Repo"
 	_ "context"
 	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
-	"time"
 
 	service "DATABASECRUD/Service"
 
@@ -55,8 +55,7 @@ func UserLoginHandler(db *sql.DB) LoginHandlerInterface {
 }
 
 var (
-	db *sql.DB
-
+	db  *sql.DB
 	err error
 )
 
@@ -79,10 +78,7 @@ func (h *LoginHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 
 		// newUser.Password = string(hashedPassword)
 		// fmt.Println(newUser.Password)
-		sqlStatment := `select * from public.users where email = $1`
-
-		err = h.db.QueryRow(sqlStatment, newUser.Email).
-			Scan(&newUser.Id, &newUser.Username, &newUser.Email, &newUser.Password, &newUser.Age, &newUser.CreatedAt, &newUser.UpdatedAt)
+		newUser, err = repo.QueryLoginUser(h.db, newUser)
 		if err != nil {
 			w.Write([]byte(fmt.Sprint(errors.New("email not register"))))
 
@@ -131,35 +127,18 @@ func (h *RegisterHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 			// newUser.Password = string(newPassword)
 			// fmt.Println(newUser.Password)
 			newUser.Password = string(hashedPassword)
-			sqlStatment := `insert into users
-			(username,email,password,age,created_date,updated_date)
-			values ($1,$2,$3,$4,$5,$5) Returning id` //sesuai dengan nama table
-			err = h.db.QueryRow(sqlStatment,
-				newUser.Username,
-				newUser.Email,
-				newUser.Password,
-				newUser.Age,
-				time.Now(),
-			).Scan(&newUser.Id)
-			if err != nil {
-				w.Write([]byte(fmt.Sprint(err)))
-			} else {
-				// fmt.Println(newUser)
-				// fmt.Println(newUser.Id)
-				response_Register := entity.ResponseRegister{
-					Age:      newUser.Age,
-					Email:    newUser.Email,
-					Id:       newUser.Id,
-					Username: newUser.Username,
-				}
-				jsonData, _ := json.Marshal(&response_Register)
-				w.Header().Add("Content-Type", "application/json")
-				w.WriteHeader(201)
-				w.Write(jsonData)
-			}
+			response_Register := repo.QueryRegisterUser(h.db, newUser)
+			jsonData, _ := json.Marshal(&response_Register)
+			w.Header().Add("Content-Type", "application/json")
+			w.WriteHeader(201)
+			w.Write(jsonData)
 		}
 
 	}
+}
+
+func QueryRegisterUser(dB *sql.DB, newUser entity.User) {
+	panic("unimplemented")
 }
 
 func (h *UserHandler) UsersHandler(w http.ResponseWriter, r *http.Request) {
@@ -191,46 +170,14 @@ func (h *UserHandler) updateUserHandler(w http.ResponseWriter, r *http.Request, 
 		serv := service.NewUserSvc()
 		validasiUser, err = serv.UpdateUser(validasiUser)
 		if err != nil {
-			w.Write([]byte(fmt.Sprint(err)))
-		} else {
-			sqlstatment := `
-			update users set username = $1, email = $2, updated_date = $3
-			where id = $4;`
-
-			_, err = h.db.Exec(sqlstatment,
-				newUser.Username,
-				newUser.Email,
-				time.Now(),
-				id,
-			)
-			if err != nil {
-				fmt.Println("error update")
-				w.Write([]byte(fmt.Sprint(errors.New("user id don't exists"))))
-
-			} else {
-				sqlstatment2 := `select * from users where id= $1`
-				err = h.db.QueryRow(sqlstatment2, id).
-					Scan(&newUser.Id, &newUser.Username, &newUser.Email, &newUser.Password, &newUser.Age, &newUser.CreatedAt, &newUser.UpdatedAt)
-				// count, err := res.RowsAffected()
-				if err != nil {
-					w.Write([]byte(fmt.Sprint(errors.New("user id don't exists"))))
-				} else {
-					fmt.Println(newUser)
-					responseUpdateUser := entity.ResponseUpdateUser{
-						Id:        newUser.Id,
-						Email:     newUser.Email,
-						Username:  newUser.Username,
-						Age:       newUser.Age,
-						UpdatedAt: time.Now(),
-					}
-					jsonData, _ := json.Marshal(&responseUpdateUser)
-					w.Header().Add("Content-Type", "application/json")
-					w.WriteHeader(200)
-					w.Write(jsonData)
-					return
-				}
-			}
+			panic(err)
 		}
+		responseUpdateUser := repo.QueryUpdateUser(h.db, newUser, id)
+		jsonData, _ := json.Marshal(&responseUpdateUser)
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(200)
+		w.Write(jsonData)
+		return
 
 	}
 }
@@ -242,22 +189,10 @@ func (h *UserHandler) deleteUserHandler(w http.ResponseWriter, r *http.Request) 
 	fmt.Println(user)
 	fmt.Println(user.Id)
 	// if temp_id != nil{}
-	if user.Id != 0 {
-		sqlstament := `DELETE from users where id = $1;`
-		_, err := h.db.Exec(sqlstament, user.Id)
 
-		if err != nil {
-			w.Write([]byte(fmt.Sprint(err)))
-
-		} else {
-			message := entity.Message{
-				Message: "Your account has been successfully deleted",
-			}
-			jsonData, _ := json.Marshal(&message)
-			w.WriteHeader(200)
-			w.Header().Add("Content-Type", "application/json")
-			w.Write(jsonData)
-		}
-	}
-
+	message := repo.QueryDeleteUser(h.db, user)
+	jsonData, _ := json.Marshal(&message)
+	w.WriteHeader(200)
+	w.Header().Add("Content-Type", "application/json")
+	w.Write(jsonData)
 }
