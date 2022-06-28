@@ -14,7 +14,7 @@ import (
 
 const PORT = ":8080"
 
-func RouterAll(db *sql.DB) {
+func SetupRoute(db *sql.DB) {
 	// handler crud
 	r := mux.NewRouter()
 	userHandler := handler.NewUserHandler(db)

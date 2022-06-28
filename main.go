@@ -28,7 +28,7 @@ func main() {
 		panic(err)
 	}
 	fmt.Println("Succesfully connected to database")
-	route.RouterAll(db)
+	route.SetupRoute(db)
 }
 
 func ConnectDbPsql(host, user, password, name string, port int) string {
