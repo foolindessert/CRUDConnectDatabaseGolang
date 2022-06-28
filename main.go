@@ -10,17 +10,10 @@ import (
 
 	handler "DATABASECRUD/Handler"
 	middleware "DATABASECRUD/Middleware"
+	"DATABASECRUD/conf"
 
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
-)
-
-const (
-	host     = "localhost"
-	port     = 5432
-	user     = "postgres"
-	password = "Abcdzfgh123" //ganti sesuai nama password postgres
-	dbname   = "db-go-sql"
 )
 
 var (
@@ -33,7 +26,7 @@ const PORT = ":8080"
 
 func main() {
 	// mmemastikan db connect atau tidak
-	db, err = sql.Open("postgres", ConnectDbPsql(host, user, password, dbname, port))
+	db, err = sql.Open("postgres", ConnectDbPsql(conf.Host, conf.User, conf.Password, conf.Dbname, conf.Port))
 	if err != nil {
 		panic(err)
 	}
@@ -91,6 +84,6 @@ func ConnectDbPsql(host, user, password, name string, port int) string {
 		port,
 		user,
 		password,
-		dbname)
+		name)
 	return psqlInfo
 }
