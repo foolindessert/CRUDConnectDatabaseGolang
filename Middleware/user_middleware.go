@@ -24,7 +24,6 @@ func AuthCekToken(next http.Handler) http.Handler {
 		fmt.Println(splitToken)
 		if len(splitToken) > 1 {
 			reqToken = splitToken[1]
-			// fmt.Println(reqToken)
 			fmt.Println("Lolos token")
 			temp_id, err := serv.VerivyToken(reqToken)
 			if err != nil {

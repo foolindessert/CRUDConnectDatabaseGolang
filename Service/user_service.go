@@ -26,7 +26,6 @@ func NewUserSvc() UserIface {
 }
 
 func (u *UserSvc) Register(user *entity.User) (*entity.User, error) {
-	// validasi field field user
 	if user.Username == "" {
 		return nil, errors.New("username cannot be empty")
 	}
@@ -48,7 +47,6 @@ func (u *UserSvc) Login(user *entity.User, tempPassword string) (*entity.User, e
 		return nil, errors.New("email cannot be empty")
 	}
 	password := []byte(tempPassword)
-	//check password salah
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), password); err != nil {
 		return nil, errors.New("invalid email/password")
 	}
@@ -86,7 +84,6 @@ func (u *UserSvc) CheckToken(compareToken string, id uint, email string, passwor
 		fmt.Println("tidak berhasil")
 		return errors.New("username cannot be empty")
 	}
-	//compare
 }
 
 func (u *UserSvc) VerivyToken(TempToken string) (float64, error) {
@@ -102,7 +99,6 @@ func (u *UserSvc) VerivyToken(TempToken string) (float64, error) {
 	if !isIntegral(id) {
 		return 0, errors.New("invalid token")
 	}
-	// fmt.Println(token.Claims.Valid())
 	return id, nil
 }
 

@@ -17,7 +17,6 @@ var (
 )
 
 func main() {
-	// mmemastikan db connect atau tidak
 	db, err = sql.Open("postgres", ConnectDbPsql(conf.Host, conf.User, conf.Password, conf.Dbname, conf.Port))
 	if err != nil {
 		panic(err)
