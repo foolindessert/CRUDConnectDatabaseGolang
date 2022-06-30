@@ -96,7 +96,7 @@ Final Project Scalable Web Service with Golang Hacktiv8
             }
             ```
         
-             * #### Delete User
+        * #### Delete User
             [DELETE]```http://localhost:8080/users```
             
             Authorization :
@@ -223,7 +223,7 @@ Final Project Scalable Web Service with Golang Hacktiv8
             }
             ```
         
-             * #### Delete Photos
+        * #### Delete Photos
             [DELETE]```http://localhost:8080/photos/{id}```
             
             Authorization :
@@ -344,7 +344,7 @@ Final Project Scalable Web Service with Golang Hacktiv8
             }
             ```
         
-             * #### Delete Comment
+        * #### Delete Comment
             [DELETE]```http://localhost:8080/comments/{id}```
             
             Authorization :
@@ -363,7 +363,10 @@ Final Project Scalable Web Service with Golang Hacktiv8
                   }
             }
             ```
+
+
+            
   
-
-
+ 
+          
  
