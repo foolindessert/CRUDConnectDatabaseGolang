@@ -124,33 +124,122 @@ Final Project Scalable Web Service with Golang Hacktiv8
                   }
             }
             ```
-      
-    * ##### Photo : 
-            * #### Register
             
-            [POST]```http://localhost:8080/users/register```
+   * ##### Photos : 
+        * #### Post Photos
+            
+            [POST]```http://localhost:8080/photos```
+            
+            Authorization :
+
+            ```
+            {
+                Authorization: "Bearer {{token}}"
+            }
+            ```
             
             body :
 
             ```json
             {
-                "age": 23,
-                "email":"desril@gmail.com",
-                "password":"desril",
-                "username":"desril"
+                "title":"Hard Work 2",
+                "caption":"self motivation",
+                "photo_url":"self/toself"
             }
             ```
 
             response
             ```json
             {
-                "data": {
-                    "id": 1,
-                    "age": 21,
-                    "email": "desril@gmail.com",
-                    "password": "$2a$10$cvpW1zR8RXkG5VBosoBJ/./kXKaO7pKXmzaLfUgsE6rU61TxqEJvi",
-                    "username": "desril",
-                    "date": "2022-06-27T13:06:37.558+07:00"
-                }
+                    "id": 21,
+                    "title": "Hard Work 2",
+                    "caption": "self motivation",
+                    "photo_url": "self/toself",
+                    "user_id": 6,
+                    "created_at": "2022-06-30T08:57:56.5840838+07:00"
             }
             ```
+            
+        * #### Get Photos
+            [GET]```http://localhost:8080/photos```
+            
+            Authorization :
+
+            ```
+            {
+                Authorization: "Bearer {{token}}"
+            }
+            ```
+
+            response
+            ```json
+            [
+                {
+                     "id": 1,
+                     "title": "walau",
+                     "caption": "hore",
+                     "photo_url": "kkkk/kkkk",
+                     "user_id": 6,
+                     "created_at": "2022-06-24T00:00:00Z",
+                     "updated_at": "2022-06-24T00:00:00Z",
+                     "User": {
+                        "email": "a3@gmail.com",
+                        "username": "a3"
+                     }
+                },
+            ]
+            ```
+            
+       * #### Update Phtotos
+            [PUT]```http://localhost:8080/photos/{id}```
+            
+            Authorization :
+
+            ```
+            {
+                Authorization: "Bearer {{token}}"
+            }
+            ```
+
+            body :
+
+            ```json
+            {
+                "title":"why 2",
+                "caption":"renungan",
+                "photo_url":"sad/tosad" 
+            }  
+            ```
+
+            response
+            ```json
+            {
+                "id": 19,
+               "title": "why 2",
+               "caption": "renungan",
+               "photo_url": "sad/tosad",
+               "user_id": 6,
+               "updated_at": "2022-06-30T00:00:00Z"
+            }
+            ```
+        
+             * #### Delete Photos
+            [DELETE]```http://localhost:8080/photos/{id}```
+            
+            Authorization :
+
+            ```
+            {
+                Authorization: "Bearer {{token}}"
+            }
+            ```           
+
+            response
+            ```json
+            {
+                  {
+                          "message": "Your photo has been successfully deleted"
+                  }
+            }
+            ```
+ 
