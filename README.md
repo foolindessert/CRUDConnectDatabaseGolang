@@ -242,4 +242,128 @@ Final Project Scalable Web Service with Golang Hacktiv8
                   }
             }
             ```
+  
+   * ##### Comment : 
+        * #### Post Comments
+            
+            [POST]```http://localhost:8080/comments```
+            
+            Authorization :
+
+            ```
+            {
+                Authorization: "Bearer {{token}}"
+            }
+            ```
+            
+            body :
+
+            ```json
+            {
+                "message":"FIGHTING!!!!",
+                "photo_id": 19
+            }
+            ```
+
+            response
+            ```json
+            {
+                     "id": 10,
+                     "message": "FIGHTING!!!!",
+                     "photo_id": 19,
+                     "user_id": 8,
+                     "created_at": "2022-06-30T09:07:30.2262943+07:00"
+            }
+            ```
+            
+        * #### Get Comment
+            [GET]```http://localhost:8080/comments```
+            
+            Authorization :
+
+            ```
+            {
+                Authorization: "Bearer {{token}}"
+            }
+            ```
+
+            response
+            ```json
+            [
+                {
+                    "id": 3,
+                    "user_id": 6,
+                    "photo_id": 4,
+                    "message": "kurang bagus",
+                    "created_at": "2022-06-24T00:00:00Z",
+                    "updated_at": "2022-06-27T00:00:00Z",
+                    "User": {
+                        "id": 6,
+                        "email": "a3@gmail.com",
+                        "username": "a3"
+                    },
+                    "Photo": {
+                        "id": 4,
+                        "title": "asdasd",
+                        "caption": "hore 11",
+                        "photo_url": "ddddd",
+                        "user_id": 6
+                    }
+                },
+            ]
+            ```
+            
+       * #### Update Comments
+            [PUT]```http://localhost:8080/comments/{id}```
+            
+            Authorization :
+
+            ```
+            {
+                Authorization: "Bearer {{token}}"
+            }
+            ```
+
+            body :
+
+            ```json
+            {
+                "message":"bagus" 
+            }  
+            ```
+
+            response
+            ```json
+            {
+                  "id": 8,
+                  "title": "why 2",
+                  "caption": "renungan",
+                  "photo_url": "sad/tosad",
+                  "user_id": 8,
+                  "updated_at": "2022-06-30T00:00:00Z"
+            }
+            ```
+        
+             * #### Delete Comment
+            [DELETE]```http://localhost:8080/comments/{id}```
+            
+            Authorization :
+
+            ```
+            {
+                Authorization: "Bearer {{token}}"
+            }
+            ```           
+
+            response
+            ```json
+            {
+                  {
+                          "message": "Your comment has been successfully deleted"
+                  }
+            }
+            ```
+  
+
+
  
