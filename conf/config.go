@@ -4,6 +4,6 @@ var (
 	Host     = "localhost"
 	Port     = 5432
 	User     = "postgres"
-	Password = "Abcdzfgh123" //ganti sesuai nama password postgres
-	Dbname   = "db-go-sql"
+	Password = "password" //ganti sesuai nama password postgres
+	Dbname   = "namadatabase" // ganti sesuai nama databasenya
 )
