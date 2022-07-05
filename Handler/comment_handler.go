@@ -5,6 +5,7 @@ import (
 	middleware "DATABASECRUD/Middleware"
 	repo "DATABASECRUD/Repo"
 	service "DATABASECRUD/Service"
+	"DATABASECRUD/helper"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -51,7 +52,14 @@ func (h *CommentHandler) CommentHandler(w http.ResponseWriter, r *http.Request) 
 		json.NewDecoder(r.Body).Decode(&newComment)
 		err := commentserv.CekInputanComment(newComment.Message)
 		if err != nil {
-			w.Write([]byte(fmt.Sprint(err)))
+			w.Header().Add("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			dataErr := helper.APIResponseFailed("Failed to Decode", http.StatusInternalServerError, false)
+			jsonData, _ := json.Marshal(&dataErr)
+			_, errWrite := w.Write(jsonData)
+			if errWrite != nil {
+				return
+			}
 		} else {
 			fmt.Println("Comment ada isi")
 			user_id := user.Id
@@ -69,7 +77,14 @@ func (h *CommentHandler) CommentHandler(w http.ResponseWriter, r *http.Request) 
 		json.NewDecoder(r.Body).Decode(&newComment)
 		err := commentserv.CekInputanComment(newComment.Message)
 		if err != nil {
-			w.Write([]byte(fmt.Sprint(err)))
+			w.Header().Add("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			dataErr := helper.APIResponseFailed("Failed to Decode", http.StatusInternalServerError, false)
+			jsonData, _ := json.Marshal(&dataErr)
+			_, errWrite := w.Write(jsonData)
+			if errWrite != nil {
+				return
+			}
 		} else {
 			fmt.Println("Comment ada isi")
 			if id != "" {

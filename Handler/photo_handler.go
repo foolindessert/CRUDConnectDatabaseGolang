@@ -5,6 +5,7 @@ import (
 	middleware "DATABASECRUD/Middleware"
 	repo "DATABASECRUD/Repo"
 	service "DATABASECRUD/Service"
+	"DATABASECRUD/helper"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -54,7 +55,14 @@ func (h *PhotoHandler) PhotoHandler(w http.ResponseWriter, r *http.Request) {
 		photoserv := service.NewPhotoSvc()
 		err := photoserv.CekInputanPhoto(newPhotos.Title, newPhotos.Url)
 		if err != nil {
-			w.Write([]byte(fmt.Sprint(err)))
+			w.Header().Add("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			dataErr := helper.APIResponseFailed("Failed to Decode", http.StatusInternalServerError, false)
+			jsonData, _ := json.Marshal(&dataErr)
+			_, errWrite := w.Write(jsonData)
+			if errWrite != nil {
+				return
+			}
 		} else {
 			//query insert
 			user_id := user.Id
@@ -76,7 +84,14 @@ func (h *PhotoHandler) PhotoHandler(w http.ResponseWriter, r *http.Request) {
 			photoserv := service.NewPhotoSvc()
 			err := photoserv.CekInputanPhoto(newPhotos.Title, newPhotos.Url)
 			if err != nil {
-				w.Write([]byte(fmt.Sprint(err)))
+				w.Header().Add("Content-Type", "application/json")
+				w.WriteHeader(http.StatusInternalServerError)
+				dataErr := helper.APIResponseFailed("Failed to Decode", http.StatusInternalServerError, false)
+				jsonData, _ := json.Marshal(&dataErr)
+				_, errWrite := w.Write(jsonData)
+				if errWrite != nil {
+					return
+				}
 			} else {
 				response := repo.QueryUpdatePhoto(h.db, newPhotos, id)
 				jsonData, _ := json.Marshal(&response)

@@ -5,6 +5,7 @@ import (
 	middleware "DATABASECRUD/Middleware"
 	repo "DATABASECRUD/Repo"
 	service "DATABASECRUD/Service"
+	"DATABASECRUD/helper"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -51,7 +52,14 @@ func (h *SocilaMediaHandler) SocilaMediaHandler(w http.ResponseWriter, r *http.R
 		json.NewDecoder(r.Body).Decode(&newSocialMedia)
 		err := socialmediaserv.CekInputanSocialMedia(newSocialMedia.Name, newSocialMedia.Social_Media_Url)
 		if err != nil {
-			w.Write([]byte(fmt.Sprint(err)))
+			w.Header().Add("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			dataErr := helper.APIResponseFailed("Failed to Decode", http.StatusInternalServerError, false)
+			jsonData, _ := json.Marshal(&dataErr)
+			_, errWrite := w.Write(jsonData)
+			if errWrite != nil {
+				return
+			}
 		} else {
 			fmt.Println("sudah dicek")
 			user_id := user.Id
@@ -69,7 +77,14 @@ func (h *SocilaMediaHandler) SocilaMediaHandler(w http.ResponseWriter, r *http.R
 			json.NewDecoder(r.Body).Decode(&newSocialMedia)
 			err := socialmediaserv.CekInputanSocialMedia(newSocialMedia.Name, newSocialMedia.Social_Media_Url)
 			if err != nil {
-				w.Write([]byte(fmt.Sprint(err)))
+				w.Header().Add("Content-Type", "application/json")
+				w.WriteHeader(http.StatusInternalServerError)
+				dataErr := helper.APIResponseFailed("Failed to Decode", http.StatusInternalServerError, false)
+				jsonData, _ := json.Marshal(&dataErr)
+				_, errWrite := w.Write(jsonData)
+				if errWrite != nil {
+					return
+				}
 			} else {
 				fmt.Println("sudah dicek")
 				response := repo.QueryUpdateSocialMedia(h.db, newSocialMedia, id)

@@ -4,10 +4,10 @@ import (
 	entity "DATABASECRUD/Entity"
 	middleware "DATABASECRUD/Middleware"
 	repo "DATABASECRUD/Repo"
+	"DATABASECRUD/helper"
 	_ "context"
 	"database/sql"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -80,14 +80,27 @@ func (h *LoginHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 		// fmt.Println(newUser.Password)
 		newUser, err = repo.QueryLoginUser(h.db, newUser)
 		if err != nil {
-			w.Write([]byte(fmt.Sprint(errors.New("email not register"))))
+			w.Header().Add("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			dataErr := helper.APIResponseFailed("Failed to Decode", http.StatusInternalServerError, false)
+			jsonData, _ := json.Marshal(&dataErr)
+			_, errWrite := w.Write(jsonData)
+			if errWrite != nil {
+				return
+			}
 
 		} else {
 			fmt.Println(newUser)
 			validasiUser, err = serv.Login(validasiUser, tempPassword)
 			if err != nil {
-				fmt.Println(err)
-				w.Write([]byte(fmt.Sprint(err)))
+				w.Header().Add("Content-Type", "application/json")
+				w.WriteHeader(http.StatusInternalServerError)
+				dataErr := helper.APIResponseFailed("Failed to Decode", http.StatusInternalServerError, false)
+				jsonData, _ := json.Marshal(&dataErr)
+				_, errWrite := w.Write(jsonData)
+				if errWrite != nil {
+					return
+				}
 
 			} else {
 				var token entity.Token
@@ -114,14 +127,28 @@ func (h *RegisterHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		newPassword := []byte(newUser.Password)
 		hashedPassword, err := bcrypt.GenerateFromPassword(newPassword, bcrypt.DefaultCost)
 		if err != nil {
-			w.Write([]byte(fmt.Sprint(err)))
+			w.Header().Add("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			dataErr := helper.APIResponseFailed("Failed to Decode", http.StatusInternalServerError, false)
+			jsonData, _ := json.Marshal(&dataErr)
+			_, errWrite := w.Write(jsonData)
+			if errWrite != nil {
+				return
+			}
 
 		}
 		validasiUser = &newUser
 		serv := service.NewUserSvc()
 		validasiUser, err = serv.Register(validasiUser)
 		if err != nil {
-			w.Write([]byte(fmt.Sprint(err)))
+			w.Header().Add("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			dataErr := helper.APIResponseFailed("Failed to Decode", http.StatusInternalServerError, false)
+			jsonData, _ := json.Marshal(&dataErr)
+			_, errWrite := w.Write(jsonData)
+			if errWrite != nil {
+				return
+			}
 
 		} else {
 			// newUser.Password = string(newPassword)
